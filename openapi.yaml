@@ -1,0 +1,441 @@
+openapi: 3.0.3
+info:
+  title: E-Commerce Inventory & Dynamic Pricing API
+  version: 1.0.0
+  description: Backend API for inventory, pricing, cart, and checkout
+servers:
+  - url: http://localhost:8080
+paths:
+  /products:
+    post:
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    get:
+      summary: List all products
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+  /products/{id}:
+    get:
+      summary: Fetch single product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+    put:
+      summary: Update product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
+      responses:
+        '200':
+          description: Product updated
+    delete:
+      summary: Archive product (soft delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Product archived
+  /products/{productId}/variants:
+    post:
+      summary: Add SKU variants
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariantCreate'
+      responses:
+        '201':
+          description: Variant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variant'
+  /variants/{id}:
+    patch:
+      summary: Update stock or price adjustment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VariantUpdate'
+      responses:
+        '200':
+          description: Variant updated
+    get:
+      summary: Fetch variant details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Variant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Variant'
+  /categories:
+    post:
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+    get:
+      summary: Fetch all categories (tree)
+      responses:
+        '200':
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+  /products/{productId}/price:
+    get:
+      summary: Get dynamic price for product
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: quantity
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: userTier
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [BRONZE, SILVER, GOLD]
+        - name: promoCode
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price calculation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceCalculation'
+  /cart:
+    post:
+      summary: Create a new cart (or return active cart)
+      responses:
+        '201':
+          description: Cart created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+  /cart/items:
+    post:
+      summary: Add variant to cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemCreate'
+      responses:
+        '201':
+          description: Cart item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItem'
+  /cart/items/{id}:
+    patch:
+      summary: Update cart item quantity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemUpdate'
+      responses:
+        '200':
+          description: Cart item updated
+    delete:
+      summary: Remove item from cart
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Cart item removed
+  /cart/checkout:
+    post:
+      summary: Checkout cart
+      responses:
+        '200':
+          description: Checkout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+components:
+  schemas:
+    ProductCreate:
+      type: object
+      required: [name, slug, basePrice, categoryId]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        basePrice:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED]
+        categoryId:
+          type: integer
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        basePrice:
+          type: number
+          format: decimal
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED]
+        categoryId:
+          type: integer
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/ProductCreate'
+        - type: object
+          properties:
+            id:
+              type: integer
+    VariantCreate:
+      type: object
+      required: [sku, title, stockQuantity, productId]
+      properties:
+        sku:
+          type: string
+        title:
+          type: string
+        stockQuantity:
+          type: integer
+        priceAdjustment:
+          type: number
+          format: decimal
+        productId:
+          type: integer
+    VariantUpdate:
+      type: object
+      properties:
+        stockQuantity:
+          type: integer
+        priceAdjustment:
+          type: number
+          format: decimal
+    Variant:
+      allOf:
+        - $ref: '#/components/schemas/VariantCreate'
+        - type: object
+          properties:
+            id:
+              type: integer
+            reservedQuantity:
+              type: integer
+    CategoryCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        parentId:
+          type: integer
+    Category:
+      allOf:
+        - $ref: '#/components/schemas/CategoryCreate'
+        - type: object
+          properties:
+            id:
+              type: integer
+    PriceCalculation:
+      type: object
+      properties:
+        base_price:
+          type: number
+          format: decimal
+        variant_price_adjustment:
+          type: number
+          format: decimal
+        applied_rules:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id:
+                type: integer
+              type:
+                type: string
+              discount_amount:
+                type: number
+                format: decimal
+        final_unit_price:
+          type: number
+          format: decimal
+        total_price:
+          type: number
+          format: decimal
+    Cart:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, CHECKED_OUT, EXPIRED]
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        order:
+          $ref: '#/components/schemas/Order'
+    CartItemCreate:
+      type: object
+      required: [cartId, variantId, quantity]
+      properties:
+        cartId:
+          type: integer
+        variantId:
+          type: integer
+        quantity:
+          type: integer
+    CartItemUpdate:
+      type: object
+      properties:
+        quantity:
+          type: integer
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        cartId:
+          type: integer
+        variantId:
+          type: integer
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+          format: decimal
+        discounts:
+          type: object
+        subtotal:
+          type: number
+          format: decimal
+        snapshotAt:
+          type: string
+          format: date-time
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        cartId:
+          type: integer
+        total:
+          type: number
+          format: decimal
