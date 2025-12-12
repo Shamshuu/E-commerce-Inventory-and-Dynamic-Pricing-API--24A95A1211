@@ -217,6 +217,3 @@ docker-compose down
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
-
-For questions or issues, please open an issue on GitHub or contact the development team.
