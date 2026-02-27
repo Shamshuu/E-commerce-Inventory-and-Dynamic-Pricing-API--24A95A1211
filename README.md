@@ -36,7 +36,7 @@ A comprehensive backend API for managing e-commerce inventory, dynamic pricing, 
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Shamshuu/E-commerce-Inventory-and-Dynamic-Pricing-API--24A95A1211
    cd E-commerce-Inventory-and-Dynamic-Pricing-API--24A95A1211
    ```
 
